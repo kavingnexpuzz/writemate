@@ -11,7 +11,7 @@ function createApp() {
   const app = express();
   const allowedOrigins = [
     ...(process.env.CLIENT_URL || "").split(","),
-    "https://writermate.vercel.app",
+    "https://writermate.vercel.app/api",
     "http://localhost:5173",
   ]
     .map((origin) => origin.trim())

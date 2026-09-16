@@ -15,7 +15,7 @@ async function start() {
   const httpServer = http.createServer(app);
   const allowedOrigins = [
     ...(process.env.CLIENT_URL || "").split(","),
-    "https://writermate.vercel.app",
+    "https://writermate.vercel.app/api",
     "http://localhost:5173",
   ]
     .map((origin) => origin.trim())

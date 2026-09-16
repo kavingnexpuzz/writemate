@@ -1,28 +1,39 @@
-const express = require('express');
-const cors = require('cors');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const mongoSanitize = require('express-mongo-sanitize');
-const rateLimit = require('express-rate-limit');
+const express = require("express");
+const cors = require("cors");
+const helmet = require("helmet");
+const morgan = require("morgan");
+const mongoSanitize = require("express-mongo-sanitize");
+const rateLimit = require("express-rate-limit");
 
-const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { errorHandler, notFound } = require("./middleware/errorHandler");
 
 function createApp() {
   const app = express();
+  const allowedOrigins = [
+    ...(process.env.CLIENT_URL || "").split(","),
+    "https://writermate.vercel.app",
+    "http://localhost:5173",
+  ]
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   app.use(helmet());
   app.use(
     cors({
-      origin: process.env.CLIENT_URL || 'http://localhost:5173',
+      origin: (requestOrigin, callback) => {
+        if (!requestOrigin || allowedOrigins.includes(requestOrigin))
+          return callback(null, true);
+        return callback(new Error("Origin is not allowed by CORS"));
+      },
       credentials: true,
-    })
+    }),
   );
-  app.use(express.json({ limit: '2mb' }));
+  app.use(express.json({ limit: "2mb" }));
   app.use(express.urlencoded({ extended: true }));
   app.use(mongoSanitize());
 
-  if (process.env.NODE_ENV !== 'test') {
-    app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+  if (process.env.NODE_ENV !== "test") {
+    app.use(morgan(process.env.NODE_ENV === "production" ? "combined" : "dev"));
   }
 
   const limiter = rateLimit({
@@ -30,21 +41,28 @@ function createApp() {
     max: Number(process.env.RATE_LIMIT_MAX) || 200,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { success: false, message: 'Too many requests, please try again later.' },
+    message: {
+      success: false,
+      message: "Too many requests, please try again later.",
+    },
   });
-  app.use('/api', limiter);
+  app.use("/api", limiter);
 
-  app.get('/api/health', (req, res) => {
-    res.json({ success: true, message: 'WriteMate API is running', data: { time: new Date().toISOString() } });
+  app.get("/api/health", (req, res) => {
+    res.json({
+      success: true,
+      message: "WriteMate API is running",
+      data: { time: new Date().toISOString() },
+    });
   });
 
-  app.use('/api/auth', require('./routes/authRoutes'));
-  app.use('/api/users', require('./routes/userRoutes'));
-  app.use('/api/writers', require('./routes/writerRoutes'));
-  app.use('/api/admin', require('./routes/adminRoutes'));
-  app.use('/api/requests', require('./routes/requestRoutes'));
-  app.use('/api/quotations', require('./routes/quotationRoutes'));
-  app.use('/api/payments', require('./routes/paymentRoutes'));
+  app.use("/api/auth", require("./routes/authRoutes"));
+  app.use("/api/users", require("./routes/userRoutes"));
+  app.use("/api/writers", require("./routes/writerRoutes"));
+  app.use("/api/admin", require("./routes/adminRoutes"));
+  app.use("/api/requests", require("./routes/requestRoutes"));
+  app.use("/api/quotations", require("./routes/quotationRoutes"));
+  app.use("/api/payments", require("./routes/paymentRoutes"));
 
   // --------------------------------------------------------------------
   // Remaining route mounts land here phase by phase:

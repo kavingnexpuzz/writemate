@@ -1,11 +1,13 @@
-import axios from 'axios';
+import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api',
+  baseURL:
+    import.meta.env.VITE_API_BASE_URL ||
+    "https://writemateback.onrender.com/api",
   withCredentials: true,
 });
 
-const TOKEN_STORAGE_KEY = 'writemate_access_token';
+const TOKEN_STORAGE_KEY = "writemate_access_token";
 
 export function getStoredToken() {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
@@ -33,7 +35,7 @@ apiClient.interceptors.response.use(
       setStoredToken(null);
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;
